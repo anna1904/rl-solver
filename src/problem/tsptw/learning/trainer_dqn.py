@@ -75,7 +75,6 @@ class TrainerDQN:
         """
         self.counter_equal_q_values = 0
         self.args = args
-        np.random.seed(self.args.seed)
         self.instance_size = self.args.n_city
         self.n_action = self.instance_size - 1  # Because we begin at a given city, so we have 1 city less to visit
 
@@ -86,8 +85,7 @@ class TrainerDQN:
 
         self.validation_set = VRPTW.generate_dataset(size=VALIDATION_SET_SIZE, n_city=self.args.n_city,
                                                      grid_size=self.args.grid_size, is_integer_instance=False,
-                                                     capacity=20,
-                                                     seed=-1)
+                                                     capacity=20, seed=args.seed)
 
         self.brain = BrainDQN(self.args, self.num_node_feats, self.num_edge_feats)
         self.memory = PrioritizedReplayMemory(MEMORY_CAPACITY)
@@ -189,7 +187,7 @@ class TrainerDQN:
         #                                           seed=-1, is_integer_instance=False)
         instance = VRPTW.generate_random_instance(n_city=self.args.n_city, grid_size=self.args.grid_size,
                                                   is_integer_instance=False, capacity=20,
-                                                  seed=-1)
+                                                  seed=self.args.seed)
 
         env = Environment(instance, self.num_node_feats, self.num_edge_feats, self.reward_scaling,
                           self.args.grid_size, period_size=1000)

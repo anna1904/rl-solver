@@ -154,3 +154,5 @@ _deps
 
 .DS_Store
 .idea
+/src/problem/tsptw/result-default/iter*
+/src/problem/tsptw/result-default/tra*
