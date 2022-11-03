@@ -4,7 +4,7 @@ import argparse
 import matplotlib as mpl
 sys.path.append(os.path.join(sys.path[0],'..','..','..', '..'))
 
-mpl.use('Agg')
+#mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 import random
@@ -32,36 +32,36 @@ MAX_BETA = 10
 MIN_VAL = -1000000
 MAX_VAL = 1000000
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-
-    # Instances parameters
-    parser.add_argument('--n_city', type=int, default=4)
-    parser.add_argument('--num_agents', type=int, default=2)
-    parser.add_argument('--grid_size', type=int, default=100)
-    parser.add_argument('--max_tw_gap', type=int, default=10)
-    parser.add_argument('--max_tw_size', type=int, default=100)
-    parser.add_argument('--period_size', type=int, default=1000)
-    parser.add_argument('--seed', type=int, default=1)
-
-    # Hyper parameters
-    parser.add_argument('--batch_size', type=int, default=50)
-    parser.add_argument('--learning_rate', type=float, default=0.0001)
-    parser.add_argument('--n_step', type=int, default=-1)
-    parser.add_argument('--max_softmax_beta', type=int, default=10, help="max_softmax_beta")
-    parser.add_argument('--hidden_layer', type=int, default=2)
-    parser.add_argument('--latent_dim', type=int, default=32, help='dimension of latent layers')
-
-
-    # Argument for Trainer
-    # parser.add_argument('--n_episode', type=int, default=1000000)
-    parser.add_argument('--n_episode', type=int, default=1000)
-    parser.add_argument('--save_dir', type=str, default='./result-default')
-    parser.add_argument('--plot_training', type=int, default=1)
-    parser.add_argument('--mode', default='cpu', help='cpu/gpu')
-
-
-    return parser.parse_args()
+# def parse_arguments():
+#     parser = argparse.ArgumentParser()
+#
+#     # Instances parameters
+#     parser.add_argument('--n_city', type=int, default=4)
+#     parser.add_argument('--num_agents', type=int, default=2)
+#     parser.add_argument('--grid_size', type=int, default=100)
+#     parser.add_argument('--max_tw_gap', type=int, default=10)
+#     parser.add_argument('--max_tw_size', type=int, default=100)
+#     parser.add_argument('--period_size', type=int, default=1000)
+#     parser.add_argument('--seed', type=int, default=1)
+#
+#     # Hyper parameters
+#     parser.add_argument('--batch_size', type=int, default=50)
+#     parser.add_argument('--learning_rate', type=float, default=0.0001)
+#     parser.add_argument('--n_step', type=int, default=-1)
+#     parser.add_argument('--max_softmax_beta', type=int, default=10, help="max_softmax_beta")
+#     parser.add_argument('--hidden_layer', type=int, default=2)
+#     parser.add_argument('--latent_dim', type=int, default=32, help='dimension of latent layers')
+#
+#
+#     # Argument for Trainer
+#     # parser.add_argument('--n_episode', type=int, default=1000000)
+#     parser.add_argument('--n_episode', type=int, default=50)
+#     parser.add_argument('--save_dir', type=str, default='./result-default')
+#     parser.add_argument('--plot_training', type=int, default=1)
+#     parser.add_argument('--mode', default='cpu', help='cpu/gpu')
+#
+#
+#     return parser.parse_args()
 
 class TrainerDQN:
     """
@@ -73,13 +73,13 @@ class TrainerDQN:
         Initialization of the trainer
         :param args:  argparse object taking hyperparameters and instance  configuration
         """
-
+        self.counter_equal_q_values = 0
         self.args = args
         np.random.seed(self.args.seed)
         self.instance_size = self.args.n_city
         self.n_action = self.instance_size - 1  # Because we begin at a given city, so we have 1 city less to visit
 
-        self.num_node_feats = 7
+        self.num_node_feats = 8
         self.num_edge_feats = 5
 
         self.reward_scaling = 0.001
@@ -129,7 +129,7 @@ class TrainerDQN:
 
             #  We first evaluate the validation step every 10 episodes, until 100, then every 100 episodes.
             if (i % 10 == 0 and i < 101) or i % 100 == 0:
-
+                print('counter_equal_q_values', self.counter_equal_q_values)
                 avg_reward = 0.0
                 for j in range(len(self.validation_set)):
                     avg_reward += self.evaluate_instance(j)
@@ -142,16 +142,17 @@ class TrainerDQN:
 
                 sys.stdout.flush()
 
-                if self.args.plot_training:
+                if self.args.plot_training and i % 1000 == 0:
                     iter_list.append(i)
                     reward_list.append(avg_reward)
-                    plt.clf()
+                    # plt.clf()
 
                     plt.plot(iter_list, reward_list, linestyle="-", label="DQN", color='y')
 
                     plt.legend(loc=3)
                     out_file = '%s/training_curve_reward.png' % self.args.save_dir
                     plt.savefig(out_file)
+                    plt.show()
 
                 fn = "iter_%d_model.pth.tar" % i
 
@@ -207,6 +208,7 @@ class TrainerDQN:
         temperature = max(0., min(self.args.max_softmax_beta,
                                   (episode_idx - 1) / STEP_EPSILON * self.args.max_softmax_beta))
 
+        total_train_reward = 0
         #  execute the episode
         while True:
 
@@ -228,10 +230,12 @@ class TrainerDQN:
 
             graph_list.append(graph)
             rewards_vector.append(reward)
+            total_train_reward += sum(np.array(rewards_vector))
             actions_vector.append(action)
             available_vector.append(avail)
 
             if cur_state.is_done(action):
+                # print(f'train episode reward {total_train_reward}')
                 break
 
             idx += 1
@@ -278,6 +282,7 @@ class TrainerDQN:
 
             total_loss += step_loss
 
+        #print(f'loss: {total_loss}')
         return total_loss, temperature
 
     def evaluate_instance(self, idx):
@@ -294,6 +299,7 @@ class TrainerDQN:
         cur_state = env.get_initial_environment()
 
         total_reward = 0
+        # print('demands', instance.demands)
 
         while True:
             graph = env.make_nn_input(cur_state, self.args.mode)
@@ -304,7 +310,7 @@ class TrainerDQN:
 
             cur_state, reward = env.get_next_state_with_reward(cur_state, action)
 
-            print('action', idx, action, reward, cur_state.is_done(env.count_current_actions), cur_state.must_visit)
+            # print('episode', idx, action, reward, cur_state.is_done(env.count_current_actions), cur_state.must_visit, avail)
 
             total_reward += reward
 
@@ -347,6 +353,11 @@ class TrainerDQN:
         if len(out[available]) > 1:
             logits = (out[available] - out[available].mean())
             div = ((logits ** 2).sum() / (len(logits) - 1)) ** 0.5
+
+            # if div == 0:
+            #     logits = logits
+            #     self.counter_equal_q_values += 1
+            # else:
             logits = logits / div
 
             probabilities = np.exp(beta * logits)

@@ -31,7 +31,7 @@ def parse_arguments():
 
 
     # Argument for Trainer
-    parser.add_argument('--n_episode', type=int, default=1000000)
+    parser.add_argument('--n_episode', type=int, default=50000)
     parser.add_argument('--save_dir', type=str, default='./result-default')
     parser.add_argument('--plot_training', type=int, default=1)
     parser.add_argument('--mode', default='cpu', help='cpu/gpu')

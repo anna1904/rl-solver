@@ -45,8 +45,9 @@ class Environment:
         last_visited = 0  # the current location
         cur_time = 0  # the current time
         cur_tour = [0]  # the tour that is current done
+        cur_load = 40
 
-        return State(self.instance, must_visit, last_visited, cur_time, cur_tour)
+        return State(self.instance, must_visit, last_visited, cur_time, cur_load, cur_tour)
 
     def make_nn_input(self, cur_state, mode):
         """
@@ -64,6 +65,7 @@ class Environment:
         #edge label: cost and time
         node_feat = []
         # node_feat.append([-1, -1, 0, 0, 0, 0, -1])
+
         for i in range(cur_state.instance.n_city):
             node_feat.append([self.instance.x_coord[i] / self.grid_size,  # x-coord
                           self.instance.y_coord[i] / self.grid_size,  # y-coord
@@ -71,8 +73,8 @@ class Environment:
                           self.instance.demands[i]/self.instance.capacity,
                           self.instance.time_windows[i][0] / self.period_size,  # start of the time windows
                           self.instance.time_windows[i][1] / self.period_size,  # end of the time windows
-                          0 if i in cur_state.must_visit else 1  # 0 if it is possible to visit the node
-                          # 1 if i == cur_state.last_visited else 0]  # 1 if it is the last node visited
+                          0 if i in cur_state.must_visit else 1,  # 0 if it is possible to visit the node
+                          1 if i == cur_state.last_visited else 0  # 1 if it is the last node visited
                          ])
 
         node_feat_tensor = torch.FloatTensor(node_feat).reshape(self.g.number_of_nodes(), self.n_node_feat)
@@ -100,20 +102,20 @@ class Environment:
 
 
         # see the related paper for the reward definition
-        if (action == 0):
-            reward = -100
-        # elif (action == 1):
-        #     reward = -10
+        # if (action == 0):
+        #     reward = 0
+        # if (action == 0):
+        #     reward = -0.1
+        # # else:
         # else:
-        else:
-            reward = self.ub_cost - self.instance.travel_time[cur_state.last_visited][new_state.last_visited]
+        reward = self.ub_cost - self.instance.travel_time[cur_state.last_visited][new_state.last_visited]
 
-            if new_state.is_done(self.count_current_actions):
+        if new_state.is_done(self.count_current_actions):
                         #  cost of going back to the starting city (always 0)
-                    reward = reward - self.instance.travel_time[new_state.last_visited][0]
+                reward = reward - self.instance.travel_time[new_state.last_visited][0]
 
 
-            reward = reward * self.reward_scaling
+        reward = reward * self.reward_scaling
 
         return new_state, reward
 
@@ -124,10 +126,10 @@ class Environment:
         :return: a 1D [0,1]-numpy vector a with a[i] == 1 iff action i is still possible
         """
 
-        available = np.zeros(self.instance.n_city, dtype=np.int)
+        available = np.zeros(self.instance.n_city , dtype=np.int)
         available_idx = np.array([x for x in cur_state.must_visit], dtype=np.int)
         available[available_idx] = 1
-        available[0] = 1
+        # available[0] = 1
         # available[1] = 1
 
         return available
