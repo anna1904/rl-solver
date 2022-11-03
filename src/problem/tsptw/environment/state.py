@@ -17,6 +17,7 @@ class State:
         self.last_visited = last_visited
         self.cur_time = cur_time
         self.tour = tour
+        self.num_do_nothing = 0
 
     def step(self, action):
         """
@@ -24,26 +25,32 @@ class State:
         :param action: the action selected
         :return: the new state wrt the transition function on the current state T(s,a) = s'
         """
+        if (action) >= 0:
+            customer = action
 
-        new_must_visit = self.must_visit - set([action])
-        new_last_visited = action
-        new_cur_time = max(self.cur_time + self.instance.travel_time[self.last_visited][action],
-                       self.instance.time_windows[action][0])
-        new_tour = self.tour + [new_last_visited]
+            new_must_visit = self.must_visit - set([customer])
+            new_last_visited = customer
+            new_cur_time = max(self.cur_time + self.instance.travel_time[self.last_visited][customer],
+                           self.instance.time_windows[customer][0])
+            new_tour = self.tour + [new_last_visited]
 
-        #  Application of the validity conditions and the pruning rules before creating the new state
-        new_must_visit = self.prune_invalid_actions(new_must_visit, new_last_visited, new_cur_time)
-        new_must_visit = self.prune_dominated_actions(new_must_visit, new_cur_time)
+            #  Application of the validity conditions and the pruning rules before creating the new state
+            new_must_visit = self.prune_invalid_actions(new_must_visit, new_last_visited, new_cur_time)
+            new_must_visit = self.prune_dominated_actions(new_must_visit, new_cur_time)
 
-        new_state = State(self.instance, new_must_visit, new_last_visited, new_cur_time, new_tour)
+            new_state = State(self.instance, new_must_visit, new_last_visited, new_cur_time, new_tour)
+        else:
+            new_state = State(self.instance, self.must_visit, self.last_visited, self.cur_time, self.tour)
 
         return new_state
 
-    def is_done(self):
+    def is_done(self, count):
         """
         :return: True iff there is no remaining actions
+        
         """
-
+        if count == 5 :
+            return True
         return len(self.must_visit) == 0
 
     def is_success(self):
