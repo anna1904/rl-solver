@@ -78,7 +78,7 @@ class TrainerDQN:
         self.counter_equal_q_values = 0
         self.args = args
         self.instance_size = self.args.n_city
-        self.n_action = self.instance_size - 1  # Because we begin at a given city, so we have 1 city less to visit
+        self.n_action = self.instance_size - 1 + self.args.depot   # Because we begin at a given city, so we have 1 city less to visit
 
         self.num_node_feats = 8
         self.num_edge_feats = 5
@@ -420,7 +420,7 @@ class TrainerDQN:
 
             q_value_prediction = t[action]
 
-            if len(next_action_indices) == 0:
+            if len(next_action_indices) == 0 or next_state_graph.number_of_nodes() == 0:
 
                 td_q_value = reward
                 t[action] = td_q_value

@@ -129,7 +129,7 @@ class Environment:
         available = np.zeros(self.instance.n_city , dtype=np.int)
         available_idx = np.array([x for x in cur_state.must_visit], dtype=np.int)
         available[available_idx] = 1
-        # available[0] = 1
+        available[0] = 1
         # available[1] = 1
 
         return available

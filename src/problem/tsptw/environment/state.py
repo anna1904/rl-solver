@@ -35,10 +35,10 @@ class State:
                            self.instance.time_windows[customer][0])
             new_tour = self.tour + [new_last_visited]
 
-            # if (customer == 0):
-            #     new_cur_load = capacity
-            # else:
-            new_cur_load = self.cur_load - self.instance.demands[customer]
+            if (customer == 0):
+                new_cur_load = self.instance.capacity
+            else:
+                new_cur_load = self.cur_load - self.instance.demands[customer]
 
 
             #  Application of the validity conditions and the pruning rules before creating the new state
@@ -82,7 +82,7 @@ class State:
         pruned_capacity = [a for a in pruned_must_visit if
                            self.instance.capacity > (new_cur_load + self.instance.demands[a])]
 
-        return set(pruned_must_visit)
+        return set(pruned_capacity)
 
     def prune_dominated_actions(self, new_must_visit, new_cur_time):
         """

@@ -40,6 +40,7 @@ def parse_arguments():
     parser.add_argument('--plot_training', type=int, default=1)
     parser.add_argument('--mode', default='cpu', help='cpu/gpu')
     parser.add_argument('--capacity', type=int, default=100)
+    parser.add_argument('--depot', type=bool, default=True)
 
 
     return parser.parse_args()
