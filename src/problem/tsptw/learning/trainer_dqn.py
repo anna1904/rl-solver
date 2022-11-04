@@ -19,7 +19,7 @@ import dgl
 
 from src.problem.tsptw.environment.environment import Environment
 from src.problem.tsptw.learning.brain_dqn import BrainDQN
-# from src.problem.tsptw.environment.tsptw import TSPTW
+from src.problem.tsptw.environment.tsptw import TSPTW
 from src.util.prioritized_replay_memory import PrioritizedReplayMemory
 from src.problem.tsptw.environment.vrptw import VRPTW
 
@@ -84,10 +84,12 @@ class TrainerDQN:
         self.num_edge_feats = 5
 
         self.reward_scaling = 0.001
-
+        # self.validation_set = TSPTW.generate_dataset(size=VALIDATION_SET_SIZE, n_city=self.args.n_city, grid_size=self.args.grid_size,
+        #                                           max_tw_gap=self.args.max_tw_gap, max_tw_size=self.args.max_tw_size,
+        #                                           seed=-1, is_integer_instance=False)
         self.validation_set = VRPTW.generate_dataset(size=VALIDATION_SET_SIZE, n_city=self.args.n_city,
                                                      grid_size=self.args.grid_size, is_integer_instance=False,
-                                                     capacity=20, seed=args.seed)
+                                                     capacity=self.args.capacity, seed=args.seed)
 
         self.brain = BrainDQN(self.args, self.num_node_feats, self.num_edge_feats)
         self.memory = PrioritizedReplayMemory(MEMORY_CAPACITY)
@@ -193,7 +195,7 @@ class TrainerDQN:
         #                                           max_tw_gap=self.args.max_tw_gap, max_tw_size=self.args.max_tw_size,
         #                                           seed=-1, is_integer_instance=False)
         instance = VRPTW.generate_random_instance(n_city=self.args.n_city, grid_size=self.args.grid_size,
-                                                  is_integer_instance=False, capacity=20,
+                                                  is_integer_instance=False, capacity=self.args.capacity,
                                                   seed=self.args.seed)
 
         env = Environment(instance, self.num_node_feats, self.num_edge_feats, self.reward_scaling,
@@ -201,10 +203,10 @@ class TrainerDQN:
 
         cur_state = env.get_initial_environment()
 
-        graph_list = []
-        rewards_vector = []
-        actions_vector = []
-        available_vector = []
+        graph_list = [dgl.DGLGraph()] * self.n_action
+        rewards_vector = np.zeros(self.n_action)
+        actions_vector = np.zeros(self.n_action, dtype=np.int16)
+        available_vector = np.zeros((self.n_action, self.args.n_city))
 
         idx = 0
         total_loss = 0
@@ -233,11 +235,10 @@ class TrainerDQN:
 
             cur_state, reward = env.get_next_state_with_reward(cur_state, action)
 
-            graph_list.append(graph)
-            rewards_vector.append(reward)
-            total_train_reward += sum(np.array(rewards_vector))
-            actions_vector.append(action)
-            available_vector.append(avail)
+            graph_list[idx] = graph
+            rewards_vector[idx] = reward
+            actions_vector[idx] = action
+            available_vector[idx] = avail
 
             if cur_state.is_done(action):
                 # print(f'train episode reward {total_train_reward}')
@@ -248,7 +249,7 @@ class TrainerDQN:
         episode_last_idx = idx
 
         #  compute the n-step values
-        for i in range(episode_last_idx):
+        for i in range(self.n_action):
 
             if i <= episode_last_idx:
                 cur_graph = graph_list[i]
@@ -257,7 +258,7 @@ class TrainerDQN:
                 cur_graph = graph_list[episode_last_idx]
                 cur_available = available_vector[episode_last_idx]
 
-            if i + self.n_step < episode_last_idx + 1:
+            if i + self.n_step < self.n_action:
                 next_graph = graph_list[i + self.n_step]
                 next_available = available_vector[i + self.n_step]
             else:
