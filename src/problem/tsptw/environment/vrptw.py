@@ -120,7 +120,7 @@ class VRPTW:
         y_coord = rand.uniform(0, self.grid_size)
 
         service_time = rand.uniform(5, 30)
-        demand = rand.uniform(1, int(self.capacity / 10))
+        demand = rand.uniform(1, int(self.capacity / 5))
 
         travel_time = [round(np.sqrt((x_coord[i] - x_coord) ** 2 + (y_coord[i] - y_coord) ** 2)) for i in range(self.n_city)]
 

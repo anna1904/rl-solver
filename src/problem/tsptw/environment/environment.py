@@ -45,7 +45,7 @@ class Environment:
         last_visited = 0  # the current location
         cur_time = 0  # the current time
         cur_tour = [0]  # the tour that is current done
-        cur_load = 40
+        cur_load = self.instance.capacity
 
         return State(self.instance, must_visit, last_visited, cur_time, cur_load, cur_tour)
 
@@ -102,17 +102,19 @@ class Environment:
 
 
         # see the related paper for the reward definition
-        # if (action == 0):
-        #     reward = 0
+        if (action == 0):
+            reward = - self.ub_cost/2
+        else:
         # if (action == 0):
         #     reward = -0.1
         # # else:
         # else:
-        reward = self.ub_cost - self.instance.travel_time[cur_state.last_visited][new_state.last_visited]
+        #ub_cost = 140
+            reward = self.ub_cost - self.instance.travel_time[cur_state.last_visited][new_state.last_visited]
 
-        if new_state.is_done(self.count_current_actions):
-                        #  cost of going back to the starting city (always 0)
-                reward = reward - self.instance.travel_time[new_state.last_visited][0]
+            if new_state.is_done(self.count_current_actions):
+                            #  cost of going back to the starting city (always 0)
+                    reward = reward - self.instance.travel_time[new_state.last_visited][0]
 
 
         reward = reward * self.reward_scaling
