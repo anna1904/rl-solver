@@ -26,8 +26,8 @@ class State:
         :param action: the action selected
         :return: the new state wrt the transition function on the current state T(s,a) = s'
         """
-        if (action) >= 0:
-            customer = action
+        if (action) >= 1:
+            customer = action - 1
 
             new_must_visit = self.must_visit - set([customer])
             new_last_visited = customer

@@ -64,7 +64,7 @@ class Environment:
         #node label: position,  demand, time window, duration
         #edge label: cost and time
         node_feat = []
-        # node_feat.append([-1, -1, 0, 0, 0, 0, -1])
+        node_feat.append([-1, -1, 0, 0, 0, 0, -1, -1])
 
         for i in range(cur_state.instance.n_city):
             node_feat.append([self.instance.x_coord[i] / self.grid_size,  # x-coord
@@ -104,12 +104,11 @@ class Environment:
         # see the related paper for the reward definition
         if (action == 0):
             reward = - self.ub_cost/2
+        elif (action == 0):
+            reward = 0
         else:
-        # if (action == 0):
-        #     reward = -0.1
-        # # else:
         # else:
-        #ub_cost = 140
+        #ub_cost = 140 * 20
             reward = self.ub_cost - self.instance.travel_time[cur_state.last_visited][new_state.last_visited]
 
             if new_state.is_done(self.count_current_actions):
@@ -128,10 +127,10 @@ class Environment:
         :return: a 1D [0,1]-numpy vector a with a[i] == 1 iff action i is still possible
         """
 
-        available = np.zeros(self.instance.n_city , dtype=np.int)
-        available_idx = np.array([x for x in cur_state.must_visit], dtype=np.int)
+        available = np.zeros(self.instance.n_city + 1 , dtype=np.int)
+        available_idx = np.array([x + 1 for x in cur_state.must_visit], dtype=np.int)
         available[available_idx] = 1
         available[0] = 1
-        # available[1] = 1
+        available[1] = 1
 
         return available

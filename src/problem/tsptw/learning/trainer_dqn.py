@@ -78,7 +78,7 @@ class TrainerDQN:
         self.counter_equal_q_values = 0
         self.args = args
         self.instance_size = self.args.n_city
-        self.n_action = self.instance_size - 1 + self.args.depot   # Because we begin at a given city, so we have 1 city less to visit
+        self.n_action = self.instance_size - 1 + self.args.depot + self.args.dummy_node   # Because we begin at a given city, so we have 1 city less to visit
 
         self.num_node_feats = 8
         self.num_edge_feats = 5
@@ -206,7 +206,7 @@ class TrainerDQN:
         graph_list = [dgl.DGLGraph()] * self.n_action
         rewards_vector = np.zeros(self.n_action)
         actions_vector = np.zeros(self.n_action, dtype=np.int16)
-        available_vector = np.zeros((self.n_action, self.args.n_city))
+        available_vector = np.zeros((self.n_action, self.args.n_city + 1))
 
         idx = 0
         total_loss = 0
