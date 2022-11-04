@@ -7,6 +7,8 @@ sys.path.append(os.path.join(sys.path[0],'..','..','..', '..'))
 #mpl.use('Agg')
 import matplotlib.pyplot as plt
 
+from torch.utils.tensorboard import SummaryWriter
+
 import random
 import time
 import sys
@@ -121,13 +123,15 @@ class TrainerDQN:
 
         cur_best_reward = MIN_VAL
 
+        writer = SummaryWriter()
+
         for i in range(self.args.n_episode):
 
             loss, beta = self.run_episode(i, memory_initialization=False)
 
             #  We first evaluate the validation step every 10 episodes, until 100, then every 100 episodes.
             if (i % 10 == 0 and i < 101) or i % 100 == 0:
-                print('counter_equal_q_values', self.counter_equal_q_values)
+                # print('counter_equal_q_values', self.counter_equal_q_values)
                 avg_reward = 0.0
                 for j in range(len(self.validation_set)):
                     avg_reward += self.evaluate_instance(j)
@@ -137,6 +141,9 @@ class TrainerDQN:
                 cur_time = round(time.time() - start_time, 2)
 
                 print('[DATA]', i, cur_time, avg_reward, loss, beta)
+                writer.add_scalar('avg_reward', avg_reward, i)
+                writer.add_scalar('loss', loss, i)
+                writer.add_scalar('beta', beta, i)
 
                 sys.stdout.flush()
 
