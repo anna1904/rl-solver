@@ -170,4 +170,4 @@ class GATNetwork(nn.Module):
                 g.ndata["n_feat"] = torch.relu(layer(g.ndata["n_feat"]))
             g.ndata["n_feat"] = self.fc_out(g.ndata["n_feat"])
 
-            return g
+            return [k.ndata["n_feat"] for k in dgl.unbatch(g)]

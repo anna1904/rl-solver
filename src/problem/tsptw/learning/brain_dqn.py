@@ -52,7 +52,7 @@ class BrainDQN:
         graph, _ = list(zip(*x))
         graph_batch = dgl.batch(graph)
         y_pred = self.model(graph_batch, graph_pooling=False)
-        y_pred = torch.stack([g.ndata["n_feat"] for g in dgl.unbatch(y_pred)]).squeeze(dim=2)
+        y_pred = torch.stack(y_pred).squeeze(dim=2)
         y_tensor = torch.FloatTensor(np.array(y))
 
         if self.args.mode == 'gpu':
@@ -81,8 +81,7 @@ class BrainDQN:
                 self.model.eval()
                 res = self.model(graph, graph_pooling=False)
 
-        res = dgl.unbatch(res)
-        return [r.ndata["n_feat"].data.cpu().numpy().flatten() for r in res]
+        return [r.cpu().data.numpy().flatten() for r in res]
 
     def update_target_model(self):
         """
