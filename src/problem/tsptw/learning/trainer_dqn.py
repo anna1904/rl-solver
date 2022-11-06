@@ -117,12 +117,12 @@ class TrainerDQN:
 
         self.initialize_memory()
 
-        print('[INFO]', 'iter', 'time', 'avg_reward_learning', 'loss', "beta")
+        print('[INFO]', 'iter', 'time', 'avg_reward_learning', 'loss', "beta", "iter_time")
 
         cur_best_reward = MIN_VAL
 
         writer = SummaryWriter()
-
+        last_time = time.time()
         for i in range(self.args.n_episode):
 
             loss, beta = self.run_episode(i, memory_initialization=False)
@@ -137,8 +137,9 @@ class TrainerDQN:
                 avg_reward = avg_reward / len(self.validation_set)
 
                 cur_time = round(time.time() - start_time, 2)
+                print('[DATA]', i, cur_time, avg_reward, loss, beta, f"{round(time.time() - last_time, 2)}s")
+                last_time = time.time()
 
-                print('[DATA]', i, cur_time, avg_reward, loss, beta)
                 writer.add_scalar('avg_reward', avg_reward, i)
                 writer.add_scalar('loss', loss, i)
                 writer.add_scalar('beta', beta, i)
