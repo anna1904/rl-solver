@@ -1,11 +1,7 @@
 import sys
 import os
 import argparse
-import matplotlib as mpl
 sys.path.append(os.path.join(sys.path[0],'..','..','..', '..'))
-
-#mpl.use('Agg')
-import matplotlib.pyplot as plt
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -148,18 +144,6 @@ class TrainerDQN:
                 writer.add_scalar('beta', beta, i)
 
                 sys.stdout.flush()
-
-                if self.args.plot_training and i % 1000 == 0:
-                    iter_list.append(i)
-                    reward_list.append(avg_reward)
-                    # plt.clf()
-
-                    plt.plot(iter_list, reward_list, linestyle="-", label="DQN", color='y')
-
-                    plt.legend(loc=3)
-                    out_file = '%s/training_curve_reward.png' % self.args.save_dir
-                    plt.savefig(out_file)
-                    plt.show()
 
                 fn = "iter_%d_model.pth.tar" % i
 
