@@ -128,7 +128,7 @@ class TrainerDQN:
             loss, beta = self.run_episode(i, memory_initialization=False)
 
             #  We first evaluate the validation step every 10 episodes, until 100, then every 100 episodes.
-            if (i % 10 == 0 and i < 101) or i % 100 == 0:
+            if i % 10 == 0:
                 # print('counter_equal_q_values', self.counter_equal_q_values)
                 avg_reward = 0.0
                 for j in range(len(self.validation_set)):
