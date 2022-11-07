@@ -175,10 +175,6 @@ class TrainerDQN:
         :return: the loss and the current beta of the softmax selection
         """
 
-        #  Generate a random instance
-        # instance = TSPTW.generate_random_instance(n_city=self.args.n_city, grid_size=self.args.grid_size,
-        #                                           max_tw_gap=self.args.max_tw_gap, max_tw_size=self.args.max_tw_size,
-        #                                           seed=-1, is_integer_instance=False)
         instance = VRPTW.generate_random_instance(n_city=self.args.n_city, grid_size=self.args.grid_size,
                                                   is_integer_instance=False, capacity=self.args.capacity,
                                                   seed=self.args.seed)
@@ -189,6 +185,7 @@ class TrainerDQN:
         cur_state = env.get_initial_environment()
 
         graph_list = [dgl.DGLGraph()] * self.n_action
+        observation_list = [[dgl.DGLGraph(), [0, 20, 0]]] * self.n_action
         rewards_vector = np.zeros(self.n_action)
         actions_vector = np.zeros(self.n_action, dtype=np.int16)
         available_vector = np.zeros((self.n_action, self.args.n_city + 1))
@@ -200,18 +197,18 @@ class TrainerDQN:
         temperature = max(0., min(self.args.max_softmax_beta,
                                   (episode_idx - 1) / STEP_EPSILON * self.args.max_softmax_beta))
 
-        total_train_reward = 0
         #  execute the episode
         while True:
 
             graph = env.make_nn_input(cur_state, self.args.mode)
+            observation = [graph, [cur_state.last_visited, cur_state.cur_load, cur_state.cur_time]]
             avail = env.get_valid_actions(cur_state)
             avail_idx = np.argwhere(avail == 1).reshape(-1)
 
             if memory_initialization:  # if we are in the memory initialization phase, a random episode is selected
                 action = random.choice(avail_idx)
             else:  # otherwise, we do the softmax selection
-                action = self.soft_select_action(graph, avail, temperature)
+                action = self.soft_select_action(observation, avail, temperature)
 
                 #  each time we do a step, we increase the counter, and we periodically synchronize the target network
                 self.steps_done += 1
@@ -221,6 +218,7 @@ class TrainerDQN:
             cur_state, reward = env.get_next_state_with_reward(cur_state, action)
 
             graph_list[idx] = graph
+            observation_list[idx] = observation
             rewards_vector[idx] = reward
             actions_vector[idx] = action
             available_vector[idx] = avail
@@ -237,22 +235,22 @@ class TrainerDQN:
         for i in range(self.n_action):
 
             if i <= episode_last_idx:
-                cur_graph = graph_list[i]
+                cur_observation = observation_list[i]
                 cur_available = available_vector[i]
             else:
-                cur_graph = graph_list[episode_last_idx]
+                cur_observation = observation_list[episode_last_idx]
                 cur_available = available_vector[episode_last_idx]
 
             if i + self.n_step < self.n_action:
-                next_graph = graph_list[i + self.n_step]
+                next_observation = observation_list[i + self.n_step]
                 next_available = available_vector[i + self.n_step]
             else:
-                next_graph = dgl.DGLGraph()
+                next_observation = [dgl.DGLGraph(), [0, 0, 0]]
                 next_available = env.get_valid_actions(cur_state)
 
             #  a state correspond to the graph, with the nodes that we can still visit
-            state_features = (cur_graph, cur_available)
-            next_state_features = (next_graph, next_available)
+            state_features = (cur_observation, cur_available)
+            next_state_features = (next_observation, next_available)
 
             #  the n-step reward
             reward = sum(rewards_vector[i:i+self.n_step])
@@ -295,13 +293,13 @@ class TrainerDQN:
         while True:
             graph = env.make_nn_input(cur_state, self.args.mode)
 
+            observation = [graph, [cur_state.last_visited, cur_state.cur_load, cur_state.cur_time]]
+
             avail = env.get_valid_actions(cur_state)
 
-            action = self.select_action(graph, avail)
+            action = self.select_action(observation, avail)
 
             cur_state, reward = env.get_next_state_with_reward(cur_state, action)
-
-            # print('episode', idx, action, reward, cur_state.is_done(env.count_current_actions), cur_state.must_visit, avail)
 
             total_reward += reward
 
@@ -310,17 +308,16 @@ class TrainerDQN:
 
         return total_reward
 
-    def select_action(self, graph, available):
+    def select_action(self, observation, available):
         """
         Select an action according the to the current model
         :param graph: the graph (first part of the state)
         :param available: the vector of available (second part of the state)
         :return: the action, following the greedy policy with the model prediction
         """
-
-        batched_graph = dgl.batch([graph, ])
+        # batched_graph = dgl.batch([observation[0], ])
         available = available.astype(bool)
-        out = self.brain.predict(batched_graph, target=False)[0].reshape(-1)
+        out = self.brain.predict(observation[0], observation[1], target=False)[0].reshape(-1)
 
         action_idx = np.argmax(out[available])
 
@@ -328,7 +325,7 @@ class TrainerDQN:
 
         return action
 
-    def soft_select_action(self, graph, available, beta):
+    def soft_select_action(self, observation, available, beta):
         """
         Select an action according the to the current model with a softmax selection of temperature beta
         :param graph: the graph (first part of the state)
@@ -337,18 +334,14 @@ class TrainerDQN:
         :return: the action, following the softmax selection with the model prediction
         """
 
-        batched_graph = dgl.batch([graph, ])
+        batched_graph = dgl.batch([observation[0], ])
         available = available.astype(bool)
-        out = self.brain.predict(batched_graph, target=False)[0].reshape(-1)
+        out = self.brain.predict(batched_graph, observation[1], target=False)[0].reshape(-1)
 
         if len(out[available]) > 1:
             logits = (out[available] - out[available].mean())
             div = ((logits ** 2).sum() / (len(logits) - 1)) ** 0.5
 
-            # if div == 0:
-            #     logits = logits
-            #     self.counter_equal_q_values += 1
-            # else:
             logits = logits / div
 
             probabilities = np.exp(beta * logits)
@@ -375,19 +368,22 @@ class TrainerDQN:
         """
 
         batch_len = len(batch)
-        graph, avail = list(zip(*[e[1][0] for e in batch]))
-
+        observation, avail = list(zip(*[e[1][0] for e in batch]))
+        graph = [g[0] for g in observation]
+        vehicle = [v[1] for v in observation]
         graph_batch = dgl.batch(graph)
 
-        next_graph, next_avail = list(zip(*[e[1][3] for e in batch]))
+        next_observation, next_avail = list(zip(*[e[1][3] for e in batch]))
+        next_graph = [g[0] for g in next_observation]
+        next_vehicle = [v[1] for v in next_observation]
         next_graph_batch = dgl.batch(next_graph)
         next_copy_graph_batch = dgl.batch(dgl.unbatch(next_graph_batch))
-        p = self.brain.predict(graph_batch, target=False)
+        p = self.brain.predict(graph_batch, vehicle, target=False)
 
         if next_graph_batch.number_of_nodes() > 0:
 
-            p_ = self.brain.predict(next_graph_batch, target=False)
-            p_target_ = self.brain.predict(next_copy_graph_batch, target=True)
+            p_ = self.brain.predict(next_graph_batch, next_vehicle, target=False)
+            p_target_ = self.brain.predict(next_copy_graph_batch, next_vehicle, target=True)
 
         x = []
         y = []
@@ -405,7 +401,7 @@ class TrainerDQN:
 
             q_value_prediction = t[action]
 
-            if len(next_action_indices) == 0 or next_state_graph.number_of_nodes() == 0:
+            if len(next_action_indices) == 0 or next_state_graph[0].number_of_nodes() == 0:
 
                 td_q_value = reward
                 t[action] = td_q_value

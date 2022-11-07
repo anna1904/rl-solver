@@ -49,9 +49,11 @@ class BrainDQN:
 
         self.model.train()
 
-        graph, _ = list(zip(*x))
+        observation, _ = list(zip(*x))
+        graph = [g[0] for g in observation]
+        vehicle = [v[1] for v in observation]
         graph_batch = dgl.batch(graph)
-        y_pred = self.model(graph_batch, graph_pooling=False)
+        y_pred = self.model(graph_batch, vehicle, graph_pooling=False)
         y_pred = torch.stack(y_pred).squeeze(dim=2)
         y_tensor = torch.FloatTensor(np.array(y))
 
@@ -65,7 +67,7 @@ class BrainDQN:
 
         return loss.item()
 
-    def predict(self, graph, target):
+    def predict(self, graph, vehicle, target):
         """
         Predict the Q-values using the current graph, either using the model or the target model
         :param graph: the graph serving as input
@@ -76,10 +78,10 @@ class BrainDQN:
         with torch.no_grad():
             if target:
                 self.target_model.eval()
-                res = self.target_model(graph, graph_pooling=False)
+                res = self.target_model(graph, vehicle, graph_pooling=False)
             else:
                 self.model.eval()
-                res = self.model(graph, graph_pooling=False)
+                res = self.model(graph, vehicle, graph_pooling=False)
 
         return [r.cpu().data.numpy().flatten() for r in res]
 

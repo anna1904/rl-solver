@@ -17,7 +17,6 @@ class State:
         self.last_visited = last_visited
         self.cur_time = cur_time
         self.tour = tour
-        self.num_do_nothing = 0
         self.cur_load = cur_load
 
     def step(self, action):

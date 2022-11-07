@@ -144,7 +144,7 @@ class GATNetwork(nn.Module):
         self.fc_layer = nn.ModuleList(self.fc_layer)
         self.fc_out = nn.Linear(latent_dim, self.output_dim)
 
-    def forward(self, g, graph_pooling):
+    def forward(self, g, vehicle,  graph_pooling):
         """
         Forward pass on the graph.
         :param g: The graph
@@ -152,7 +152,6 @@ class GATNetwork(nn.Module):
         an output on the global graph. Otherwise, output are node-dependant
         :return: prediction of the GAT network
         """
-
         for l, layer in enumerate(self.embedding_layer):
             g = layer(g)
             g.ndata["n_feat"] = torch.relu(g.ndata["n_feat"])
