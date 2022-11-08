@@ -317,7 +317,7 @@ class TrainerDQN:
         """
         # batched_graph = dgl.batch([observation[0], ])
         available = available.astype(bool)
-        out = self.brain.predict(observation[0], observation[1], target=False)[0].reshape(-1)
+        out = self.brain.predict(observation[0], [observation[1]], target=False)[0].reshape(-1)
 
         action_idx = np.argmax(out[available])
 
@@ -336,7 +336,7 @@ class TrainerDQN:
 
         batched_graph = dgl.batch([observation[0], ])
         available = available.astype(bool)
-        out = self.brain.predict(batched_graph, observation[1], target=False)[0].reshape(-1)
+        out = self.brain.predict(batched_graph, [observation[1]], target=False)[0].reshape(-1)
 
         if len(out[available]) > 1:
             logits = (out[available] - out[available].mean())

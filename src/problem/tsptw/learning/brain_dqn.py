@@ -7,7 +7,7 @@ import os
 import numpy as np
 import dgl
 
-from src.architecture.graph_attention_network import GATNetwork
+from src.architecture.graph_attention_network import Transformer
 
 
 class BrainDQN:
@@ -30,8 +30,8 @@ class BrainDQN:
                          (self.args.latent_dim, self.args.latent_dim),
                          (self.args.latent_dim, self.args.latent_dim)]
 
-        self.model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 1)
-        self.target_model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 1)
+        self.model = Transformer(embedding = self.embedding, hidden_layer = self.args.hidden_layer, latent_dim = self.args.latent_dim)
+        self.target_model = Transformer(embedding = self.embedding, hidden_layer = self.args.hidden_layer, latent_dim = self.args.latent_dim)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
 
@@ -53,8 +53,9 @@ class BrainDQN:
         graph = [g[0] for g in observation]
         vehicle = [v[1] for v in observation]
         graph_batch = dgl.batch(graph)
-        y_pred = self.model(graph_batch, vehicle, graph_pooling=False)
-        y_pred = torch.stack(y_pred).squeeze(dim=2)
+        y_pred = self.model(graph_batch, vehicle)
+        max_features = [torch.max(i, dim=1).values for i in y_pred]
+        y_pred = torch.stack(max_features)
         y_tensor = torch.FloatTensor(np.array(y))
 
         if self.args.mode == 'gpu':
@@ -74,16 +75,20 @@ class BrainDQN:
         :param target: True is the target network must be used for the prediction
         :return: A list of the predictions for each node
         """
-
         with torch.no_grad():
             if target:
                 self.target_model.eval()
-                res = self.target_model(graph, vehicle, graph_pooling=False)
+                res = self.target_model(graph, vehicle)
             else:
                 self.model.eval()
-                res = self.model(graph, vehicle, graph_pooling=False)
+                res = self.model(graph, vehicle)
 
-        return [r.cpu().data.numpy().flatten() for r in res]
+        max_features = [torch.max(i, dim=1).values.numpy() for i in res]
+        # for i in range(len(res)):
+        #     res[i] = torch.max(res[i], dim=1).values
+        #     res[i] = res[i].numpy()
+        #[r.cpu().data.numpy().flatten() for r in res]
+        return max_features
 
     def update_target_model(self):
         """

@@ -13,6 +13,8 @@ import torch.nn as nn
 import dgl
 import numpy as np
 
+from src.architecture.transformer import *
+
 SQRT_TWO = float(np.sqrt(2))
 
 
@@ -144,7 +146,7 @@ class GATNetwork(nn.Module):
         self.fc_layer = nn.ModuleList(self.fc_layer)
         self.fc_out = nn.Linear(latent_dim, self.output_dim)
 
-    def forward(self, g, vehicle,  graph_pooling):
+    def forward(self, g,  graph_pooling):
         """
         Forward pass on the graph.
         :param g: The graph
@@ -170,3 +172,46 @@ class GATNetwork(nn.Module):
             g.ndata["n_feat"] = self.fc_out(g.ndata["n_feat"])
 
             return [k.ndata["n_feat"] for k in dgl.unbatch(g)]
+
+
+class Transformer(nn.Module):
+    def __init__(
+        self,
+        num_encoder_layers: int = 6,
+        num_decoder_layers: int = 1,
+        dim_model: int = 3,
+        num_heads: int = 2,
+        dim_feedforward: int = 2048,
+        dropout: float = 0.1,
+        embedding: object = [],
+        hidden_layer: int = 1,
+        latent_dim: int = 32
+    ):
+        super().__init__()
+
+        self.attention = GATNetwork(embedding, hidden_layer, latent_dim, 3)
+        self.encoder = TransformerEncoder(
+            num_layers=num_encoder_layers,
+            dim_model=dim_model,
+            num_heads=num_heads,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+        )
+        self.decoder = TransformerDecoder(
+            num_layers=num_decoder_layers,
+            dim_model=dim_model,
+            num_heads=num_heads,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+        )
+
+    def forward(self, g, vehicle) -> Tensor:
+        enc_src = self.attention(g, graph_pooling = False)
+        # enc_src = enc_src.reshape(len(enc_src), *enc_src.shape[1:])
+        # enc_src = torch.stack(enc_src)
+        enc_src = [r if r.shape[0] != 0 else torch.zeros(21, 3) for r in enc_src]
+        enc_src = torch.stack(enc_src)
+        vehicle_tensor = torch.tensor(vehicle, dtype=torch.float)
+        vehicle_batched = vehicle_tensor.reshape(len(vehicle), 1 ,-1)
+        value = self.encoder(vehicle_batched)
+        return self.decoder(enc_src, value)
