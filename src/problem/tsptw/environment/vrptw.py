@@ -167,7 +167,7 @@ class VRPTW:
         y_coord = [rand.uniform(0, grid_size) for _ in range(n_city-1)]
 
         service_times = [rand.uniform(5, 30) for _ in range(n_city-1)]
-        demands = [rand.uniform(1, int(capacity/10)) for _ in range(n_city-1)]
+        demands = [rand.uniform(1, int(capacity/5)) for _ in range(n_city-1)]
 
         #depot as a first node
         depot_location = (round(grid_size / 2), round(grid_size / 2))

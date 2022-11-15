@@ -99,7 +99,7 @@ def predict(graph, vehicle, trainer):
     device = torch.device('cpu')
     model = Transformer(embedding=embedding, hidden_layer=trainer.args.hidden_layer, latent_dim=trainer.args.latent_dim)
     model.load_state_dict(
-        torch.load('/Users/anko/Development/Imperial/rl-solver/src/problem/tsptw/result-default/iter_670_model.pth.tar',
+        torch.load('/Users/anko/Development/Imperial/rl-solver/src/problem/tsptw/result-default_second_seed/iter_5900_model.pth.tar',
                    map_location=device))
     model.eval()
     res = model(graph, vehicle)
