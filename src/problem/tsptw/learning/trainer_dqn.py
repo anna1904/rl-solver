@@ -30,36 +30,7 @@ MAX_BETA = 10
 MIN_VAL = -1000000
 MAX_VAL = 1000000
 
-# def parse_arguments():
-#     parser = argparse.ArgumentParser()
-#
-#     # Instances parameters
-#     parser.add_argument('--n_city', type=int, default=4)
-#     parser.add_argument('--num_agents', type=int, default=2)
-#     parser.add_argument('--grid_size', type=int, default=100)
-#     parser.add_argument('--max_tw_gap', type=int, default=10)
-#     parser.add_argument('--max_tw_size', type=int, default=100)
-#     parser.add_argument('--period_size', type=int, default=1000)
-#     parser.add_argument('--seed', type=int, default=1)
-#
-#     # Hyper parameters
-#     parser.add_argument('--batch_size', type=int, default=50)
-#     parser.add_argument('--learning_rate', type=float, default=0.0001)
-#     parser.add_argument('--n_step', type=int, default=-1)
-#     parser.add_argument('--max_softmax_beta', type=int, default=10, help="max_softmax_beta")
-#     parser.add_argument('--hidden_layer', type=int, default=2)
-#     parser.add_argument('--latent_dim', type=int, default=32, help='dimension of latent layers')
-#
-#
-#     # Argument for Trainer
-#     # parser.add_argument('--n_episode', type=int, default=1000000)
-#     parser.add_argument('--n_episode', type=int, default=50)
-#     parser.add_argument('--save_dir', type=str, default='./result-default')
-#     parser.add_argument('--plot_training', type=int, default=1)
-#     parser.add_argument('--mode', default='cpu', help='cpu/gpu')
-#
-#
-#     return parser.parse_args()
+
 
 class TrainerDQN:
     """
@@ -74,7 +45,7 @@ class TrainerDQN:
         self.counter_equal_q_values = 0
         self.args = args
         self.instance_size = self.args.n_city
-        self.n_action = self.instance_size - 1 + self.args.depot + self.args.dummy_node   # Because we begin at a given city, so we have 1 city less to visit
+        self.n_action = self.instance_size + self.args.depot + self.args.dummy_node   # Because we begin at a given city, so we have 1 city less to visit
 
         self.num_node_feats = 8
         self.num_edge_feats = 5
@@ -153,7 +124,7 @@ class TrainerDQN:
                 if avg_reward >= cur_best_reward:
                     cur_best_reward = avg_reward
                     self.brain.save(folder=self.args.save_dir, filename=fn)
-                elif i % 10000 == 0:
+                elif i % 10 == 0:
                     self.brain.save(folder=self.args.save_dir, filename=fn)
 
     def initialize_memory(self):
@@ -223,7 +194,7 @@ class TrainerDQN:
             actions_vector[idx] = action
             available_vector[idx] = avail
 
-            if cur_state.is_done(action):
+            if cur_state.is_done(env.count_current_actions):
                 # print(f'train episode reward {total_train_reward}')
                 break
 

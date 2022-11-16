@@ -30,8 +30,8 @@ class BrainDQN:
                          (self.args.latent_dim, self.args.latent_dim),
                          (self.args.latent_dim, self.args.latent_dim)]
 
-        self.model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 1)
-        self.target_model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 1)
+        self.model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 3)
+        self.target_model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 3)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
 
@@ -54,7 +54,9 @@ class BrainDQN:
         vehicle = [v[1] for v in observation]
         graph_batch = dgl.batch(graph)
         y_pred = self.model(graph_batch, vehicle, graph_pooling=False)
-        y_pred = torch.stack(y_pred).squeeze(dim=2)
+        # y_pred = torch.stack(y_pred).squeeze(dim=2)
+        max_features = [torch.max(i, dim=1).values for i in y_pred]
+        y_pred = torch.stack(max_features)
         y_tensor = torch.FloatTensor(np.array(y))
 
         if self.args.mode == 'gpu':
@@ -82,8 +84,9 @@ class BrainDQN:
             else:
                 self.model.eval()
                 res = self.model(graph, vehicle, graph_pooling=False)
-
-        return [r.cpu().data.numpy().flatten() for r in res]
+        max_features = [torch.max(i, dim=1).values.numpy() for i in res]
+        # return [r.cpu().data.numpy().flatten() for r in res]
+        return max_features
 
     def update_target_model(self):
         """

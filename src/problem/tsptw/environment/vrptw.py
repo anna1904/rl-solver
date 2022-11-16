@@ -40,8 +40,8 @@ class VRPTW:
         g = nx.DiGraph()
 
         g.add_node(0) ##TODO add more then one dummy node in a loop
-        g.add_edge(0, 0, weight=-1, is_k_neigh_1=-1, is_k_neigh_5=-1,
-                   is_k_neigh_10=-1, is_k_neigh_20=-1)
+        g.add_edge(0, 0, weight=1000000, is_k_neigh_1=0, is_k_neigh_5=0,
+                   is_k_neigh_10=0, is_k_neigh_20=0)
 
         for i in range(self.n_city):
 
@@ -167,7 +167,7 @@ class VRPTW:
         y_coord = [rand.uniform(0, grid_size) for _ in range(n_city-1)]
 
         service_times = [rand.uniform(5, 30) for _ in range(n_city-1)]
-        demands = [rand.uniform(1, int(capacity/10)) for _ in range(n_city-1)]
+        demands = [rand.uniform(1, int(capacity/5)) for _ in range(n_city-1)]
 
         #depot as a first node
         depot_location = (round(grid_size / 2), round(grid_size / 2))

@@ -41,13 +41,14 @@ class Environment:
         :return: The initial state
         """
 
-        must_visit = set(range(1, self.instance.n_city))  # cities that still have to be visited.
+        must_visit = set(range(0, self.instance.n_city))  # cities that still have to be visited.
+        cap_allow = set(range(1, self.instance.n_city))
         last_visited = 0  # the current location
         cur_time = 0  # the current time
         cur_tour = [0]  # the tour that is current done
         cur_load = self.instance.capacity
 
-        return State(self.instance, must_visit, last_visited, cur_time, cur_load, cur_tour)
+        return State(self.instance, must_visit, cap_allow, last_visited, cur_time, cur_load, cur_tour)
 
     def make_nn_input(self, cur_state, mode):
         """
@@ -64,7 +65,7 @@ class Environment:
         #node label: position,  demand, time window, duration
         #edge label: cost and time
         node_feat = []
-        node_feat.append([-1, -1, 0, 0, 0, 0, -1, -1])
+        node_feat.append([0, 0, 0, 0, 0, 0, 0, 0])
 
         for i in range(cur_state.instance.n_city):
             node_feat.append([self.instance.x_coord[i] / self.grid_size,  # x-coord
@@ -102,8 +103,10 @@ class Environment:
 
 
         # see the related paper for the reward definition
-        if (action == 0):
-            reward = - self.ub_cost/2
+        if (action == 1):
+            reward = - self.ub_cost/25
+            if (len(new_state.must_visit) == 0):
+                reward = self.ub_cost
         elif (action == 0):
             reward = 0
         else:
@@ -111,10 +114,9 @@ class Environment:
         #ub_cost = 140 * 20
             reward = self.ub_cost - self.instance.travel_time[cur_state.last_visited][new_state.last_visited]
 
-            if new_state.is_done(self.count_current_actions):
-                            #  cost of going back to the starting city (always 0)
-                    reward = reward - self.instance.travel_time[new_state.last_visited][0]
-
+            # if new_state.is_done(self.count_current_actions):
+            #                 #  cost of going back to the starting city (always 0)
+            #         reward = reward - self.instance.travel_time[new_state.last_visited][0]
 
         reward = reward * self.reward_scaling
 
@@ -128,7 +130,7 @@ class Environment:
         """
 
         available = np.zeros(self.instance.n_city + 1 , dtype=np.int)
-        available_idx = np.array([x + 1 for x in cur_state.must_visit], dtype=np.int)
+        available_idx = np.array([x + 1 for x in cur_state.cap_allow], dtype=np.int)
         available[available_idx] = 1
         available[0] = 1
         available[1] = 1

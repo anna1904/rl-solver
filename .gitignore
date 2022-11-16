@@ -157,3 +157,6 @@ _deps
 /src/problem/tsptw/result-default/iter*
 /src/problem/tsptw/result-default/tra*
 /src/problem/tsptw/runs/
+/src/problem/tsptw/result-default_first_seed/
+/src/problem/tsptw/result-default_second_seed/
+/src/problem/tsptw/environment/benchmark.ipynb

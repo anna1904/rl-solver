@@ -1,7 +1,7 @@
 
 
 class State:
-    def __init__(self, instance, must_visit, last_visited, cur_time, cur_load, tour):
+    def __init__(self, instance, must_visit, cap_allow, last_visited, cur_time, cur_load, tour):
         """
         Build a State
         Note that the set of valid actions correspond to the must_visit part of the state
@@ -14,6 +14,7 @@ class State:
 
         self.instance = instance
         self.must_visit = must_visit
+        self.cap_allow = cap_allow
         self.last_visited = last_visited
         self.cur_time = cur_time
         self.tour = tour
@@ -29,6 +30,7 @@ class State:
             customer = action - 1
 
             new_must_visit = self.must_visit - set([customer])
+            new_cap_allow = self.cap_allow - set([customer])
             new_last_visited = customer
             new_cur_time = max(self.cur_time + self.instance.travel_time[self.last_visited][customer],
                            self.instance.time_windows[customer][0])
@@ -41,12 +43,12 @@ class State:
 
 
             #  Application of the validity conditions and the pruning rules before creating the new state
-            new_must_visit = self.prune_invalid_actions(new_must_visit, new_last_visited, new_cur_time, new_cur_load)
-            new_must_visit = self.prune_dominated_actions(new_must_visit, new_cur_time)
+            new_cap_allow = self.prune_invalid_actions(new_must_visit, new_cap_allow, new_last_visited, new_cur_time, new_cur_load)
+            # new_must_visit = self.prune_dominated_actions(new_must_visit, new_cur_time)
 
-            new_state = State(self.instance, new_must_visit, new_last_visited, new_cur_time, new_cur_load, new_tour)
+            new_state = State(self.instance, new_must_visit, new_cap_allow, new_last_visited, new_cur_time, new_cur_load, new_tour)
         else:
-            new_state = State(self.instance, self.must_visit, self.last_visited, self.cur_time, self.cur_load, self.tour)
+            new_state = State(self.instance, self.must_visit, self.cap_allow, self.last_visited, self.cur_time, self.cur_load, self.tour)
 
         return new_state
 
@@ -55,8 +57,8 @@ class State:
         :return: True iff there is no remaining actions
         
         """
-        # if count == 5:
-        #     return True
+        if count == 22: #TODO to dynamic
+            return True
         return len(self.must_visit) == 0
 
     def is_success(self):
@@ -66,7 +68,7 @@ class State:
 
         return len(self.tour) == self.instance.n_city
 
-    def prune_invalid_actions(self, new_must_visit, new_last_visited, new_cur_time, new_cur_load):
+    def prune_invalid_actions(self, new_must_visit, new_cap_allow, new_last_visited, new_cur_time, new_cur_load):
         """
         Validity condition: Keep only the cities that can fit in the time windows according to the travel time.
         :param new_must_visit: the cities that we still have to visit
@@ -78,8 +80,7 @@ class State:
         pruned_must_visit = [a for a in new_must_visit if
                              new_cur_time + self.instance.travel_time[new_last_visited][a] <= self.instance.time_windows[a][1]]
 
-        pruned_capacity = [a for a in pruned_must_visit if
-                           self.instance.capacity > (new_cur_load + self.instance.demands[a])]
+        pruned_capacity = [a for a in new_must_visit if new_cur_load > self.instance.demands[a]]
 
         return set(pruned_capacity)
 
