@@ -100,7 +100,7 @@ def predict(graph, vehicle, trainer):
     device = torch.device('cpu')
     model = GATNetwork(embedding, trainer.args.hidden_layer, trainer.args.latent_dim, 3)
     model.load_state_dict(
-        torch.load('/Users/anko/Development/Imperial/rl-solver/src/problem/tsptw/result-default/iter_1100_model.pth.tar',
+        torch.load('/Users/anko/Development/Imperial/rl-solver/src/problem/tsptw/result-default/iter_300_model.pth.tar',
                    map_location=device))
     model.eval()
     res = model(graph, vehicle, graph_pooling=False)

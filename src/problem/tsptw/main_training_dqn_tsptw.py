@@ -41,7 +41,7 @@ def parse_arguments():
     parser.add_argument('--mode', default='cpu', help='cpu/gpu')
     parser.add_argument('--capacity', type=int, default=20)
     parser.add_argument('--depot', type=bool, default=True)
-    parser.add_argument('--dummy_node', type=bool, default=True)
+    parser.add_argument('--dummy_node', type=bool, default=False)
 
 
     return parser.parse_args()

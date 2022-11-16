@@ -39,9 +39,9 @@ class VRPTW:
 
         g = nx.DiGraph()
 
-        g.add_node(0) ##TODO add more then one dummy node in a loop
-        g.add_edge(0, 0, weight=1000000, is_k_neigh_1=0, is_k_neigh_5=0,
-                   is_k_neigh_10=0, is_k_neigh_20=0)
+        # g.add_node(0) ##TODO add more then one dummy node in a loop
+        # g.add_edge(0, 0, weight=1000000, is_k_neigh_1=0, is_k_neigh_5=0,
+        #            is_k_neigh_10=0, is_k_neigh_20=0)
 
         for i in range(self.n_city):
 
@@ -62,9 +62,9 @@ class VRPTW:
                     is_k_neigh_20 = 1 if j in k_min_idx_20 else 0
 
                     weight = self.travel_time[i][j]
-                    g.add_edge(i+1, j+1, weight=weight, is_k_neigh_1=is_k_neigh_1, is_k_neigh_5=is_k_neigh_5,
+                    g.add_edge(i, j, weight=weight, is_k_neigh_1=is_k_neigh_1, is_k_neigh_5=is_k_neigh_5,
                                is_k_neigh_10=is_k_neigh_10, is_k_neigh_20=is_k_neigh_20)
-        assert g.number_of_nodes() == (self.n_city + 1)
+        assert g.number_of_nodes() == (self.n_city)
 
         return g
 

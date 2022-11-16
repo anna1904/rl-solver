@@ -159,7 +159,7 @@ class TrainerDQN:
         observation_list = [[dgl.DGLGraph(), [0, 20, 0]]] * self.n_action
         rewards_vector = np.zeros(self.n_action)
         actions_vector = np.zeros(self.n_action, dtype=np.int16)
-        available_vector = np.zeros((self.n_action, self.args.n_city + 1))
+        available_vector = np.zeros((self.n_action, self.args.n_city))
 
         idx = 0
         total_loss = 0
