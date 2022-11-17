@@ -57,7 +57,7 @@ class State:
         :return: True iff there is no remaining actions
         
         """
-        if count == 21: #TODO to dynamic
+        if count == 22: #TODO to dynamic
             return True
         return len(self.must_visit) == 0
 

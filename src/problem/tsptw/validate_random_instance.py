@@ -77,7 +77,7 @@ def evaluate_instance(trainer, instance):
 
         avail = env.get_valid_actions(cur_state)
 
-        action = select_action(observation, avail, trainer)
+        action = trainer.soft_select_action(observation, avail, 1)
 
         action_list.append(action)
 
@@ -98,9 +98,9 @@ def predict(graph, vehicle, trainer):
                   (trainer.args.latent_dim, trainer.args.latent_dim),
                   (trainer.args.latent_dim, trainer.args.latent_dim)]
     device = torch.device('cpu')
-    model = GATNetwork(embedding, trainer.args.hidden_layer, trainer.args.latent_dim, 3)
+    model = GATNetwork(embedding, trainer.args.hidden_layer, trainer.args.latent_dim, 1)
     model.load_state_dict(
-        torch.load('/Users/anko/Development/Imperial/rl-solver/src/problem/tsptw/result-default/iter_300_model.pth.tar',
+        torch.load('/Users/anko/Development/Imperial/rl-solver/src/problem/tsptw/result-default/iter_450_model.pth.tar',
                    map_location=device))
     model.eval()
     res = model(graph, vehicle, graph_pooling=False)

@@ -104,9 +104,9 @@ class Environment:
 
         # see the related paper for the reward definition
         if (action == 0):
-            reward = - self.ub_cost/25
+            reward = - self.ub_cost/5
             if (len(new_state.must_visit) == 0):
-                reward = self.ub_cost
+                reward = self.ub_cost/2
         # elif (action == 0):
         #     reward = 0
         else:

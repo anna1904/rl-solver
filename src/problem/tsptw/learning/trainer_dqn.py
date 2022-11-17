@@ -22,7 +22,8 @@ from src.problem.tsptw.environment.vrptw import VRPTW
 #  definition of constants
 MEMORY_CAPACITY = 50000
 GAMMA = 1
-STEP_EPSILON = 5000.0
+# STEP_EPSILON = 5000.0
+STEP_EPSILON = 10000.0
 UPDATE_TARGET_FREQUENCY = 500
 VALIDATION_SET_SIZE = 100
 RANDOM_TRIAL = 100

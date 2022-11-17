@@ -30,8 +30,8 @@ class BrainDQN:
                          (self.args.latent_dim, self.args.latent_dim),
                          (self.args.latent_dim, self.args.latent_dim)]
 
-        self.model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 3)
-        self.target_model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 3)
+        self.model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 1)
+        self.target_model = GATNetwork(self.embedding, self.args.hidden_layer, self.args.latent_dim, 1)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
 
